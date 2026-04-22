@@ -42,6 +42,20 @@ services:
     restart: unless-stopped
     depends_on:
       - victoria-metrics
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_PLUGINS_PREINSTALL=victoriametrics-metrics-datasource
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - victoria-metrics
 
 volumes:
   victoria-metrics-data:
+  grafana-data:
