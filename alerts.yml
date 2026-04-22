@@ -1,0 +1,11 @@
+groups:
+  - name: node-alerts
+    rules:
+      - alert: HighMemoryUsage
+        expr: 100 * ((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 80% for more than 2 minutes."

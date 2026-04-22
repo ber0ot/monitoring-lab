@@ -1,0 +1,47 @@
+services:
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro'
+    ports:
+      - '9100:9100'
+    restart: unless-stopped
+
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: victoria-metrics
+    command:
+      - '--storageDataPath=/victoria-metrics-data'
+      - '--promscrape.config=/etc/prometheus/prometheus.yml'
+      - '--vmalert.proxyURL=http://vmalert:8880'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - victoria-metrics-data:/victoria-metrics-data
+    ports:
+      - '8428:8428'
+    restart: unless-stopped
+    depends_on:
+      - node-exporter
+
+  vmalert:
+    image: victoriametrics/vmalert:latest
+    container_name: vmalert
+    command:
+      - '--rule=/etc/alerts/alerts.yml'
+      - '--datasource.url=http://victoria-metrics:8428'
+      - '--remoteRead.url=http://victoria-metrics:8428'
+      - '--remoteWrite.url=http://victoria-metrics:8428'
+      - '--notifier.blackhole'
+    volumes:
+      - ./alerts.yml:/etc/alerts/alerts.yml:ro
+    ports:
+      - '8880:8880'
+    restart: unless-stopped
+    depends_on:
+      - victoria-metrics
+
+volumes:
+  victoria-metrics-data:
